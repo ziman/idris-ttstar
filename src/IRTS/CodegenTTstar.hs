@@ -59,7 +59,27 @@ cgDecl (name, (def, rigCount, injectivity, accessibility, totality, metaInfo))
     = cgDef name def
 
 cgDef :: Name -> Def -> Doc
-cgDef n def = cgName n
+cgDef n (Function ty body) =
+    cgName n <+> text "\\:" <+> cgTm ty <+> text "=" <+> cgTm body <> dot
+cgDef n (TyDecl ntype ty) =
+    text "postulate" <+> cgName n <+> colon <+> cgTm ty <> dot
+cgDef n (Operator ty arity defn) =
+    text "-- operator" <+> cgName n <+> colon <+> cgTm ty
+cgDef n (CaseOp cinfo ty args defn defn_simp cdefs) =
+    cgName n <+> colon <+> cgTm ty <> dot
+    $$ indent (vcat [
+        cgClause n c | c <- defn
+      ])
+
+cgClause :: Name -> Either Term (Term, Term) -> Doc
+cgClause fn (Left tm) = cgName fn <+> text "left:" <+> cgTm tm <> dot
+cgClause fn (Right (lhs, rhs)) = cgTm lhs <+> text "=" <+> cgTm rhs <> dot
+
+cgTm :: TT Name -> Doc
+cgTm tm = text "(term)"
+
+dot :: Doc
+dot = text "."
 
     {-
     -- main file
