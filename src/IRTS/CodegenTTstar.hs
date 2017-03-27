@@ -75,11 +75,33 @@ cgClause :: Name -> Either Term (Term, Term) -> Doc
 cgClause fn (Left tm) = cgName fn <+> text "left:" <+> cgTm tm <> dot
 cgClause fn (Right (lhs, rhs)) = cgTm lhs <+> text "=" <+> cgTm rhs <> dot
 
-cgTm :: TT Name -> Doc
-cgTm tm = text "(term)"
+cgTm :: Term -> Doc
+cgTm = cgTm' []
+
+cgTm' :: [Name] -> Term -> Doc
+cgTm' dbs (P nty n ty) = cgName n
+cgTm' dbs (V i) = cgName (dbs !! i)
+cgTm' dbs (Bind n (Lam rc ty) tm) =
+    text "\\" <> cgName n <> colon <> cgTm' dbs ty <> dot
+    <+> cgTm' (n:dbs) tm
+cgTm' dbs (Bind n (Pi rc impl ty kind) tm) =
+    parens (cgName n <+> colon <+> cgTm' dbs ty)
+    <+> text "->" <+> cgTm' (n:dbs) tm
+cgTm' dbs (Bind n (Let ty val) tm) =
+    text "let" <+> cgName n <+> colon <+> cgTm' dbs ty
+    <+> text "=" <+> cgTm' dbs val
+    <+> text "in" <+> cgTm' (n:dbs) tm
+cgTm' dbs (App st f x) = parens (cgTm' dbs f) <+> parens (cgTm' dbs x)
+cgTm' dbs (Constant c) = cgConst c
+cgTm' dbs Erased = text "_"
+cgTm' dbs (TType _) = text "Type"
+cgTm' dbs tm = text $ "(unsupported term: " ++ show tm ++ ")"
 
 dot :: Doc
 dot = text "."
+
+cgConst :: Const -> Doc
+cgConst c = text $ "(constant: " ++ show c ++ ")"
 
     {-
     -- main file
