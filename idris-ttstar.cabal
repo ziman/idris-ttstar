@@ -1,4 +1,4 @@
-Name:           idris-python
+Name:           idris-ttstar
 Version:        0.0.0.1
 License:        BSD3
 License-file:   LICENSE
@@ -7,7 +7,7 @@ Maintainer:	Matus Tejiscak <ziman@functor.sk>
 Build-Type:	Simple
 Cabal-Version:  >= 1.8
 
-Executable idris-codegen-python
+Executable idris-codegen-ttstar
   Main-is:        Main.hs
   hs-source-dirs: src
 
@@ -21,7 +21,7 @@ Executable idris-codegen-python
                 , transformers
                 , text
 
-  other-modules: IRTS.CodegenPython
+  other-modules: IRTS.CodegenTTstar
 
   if os(linux)
      cpp-options:   -DLINUX

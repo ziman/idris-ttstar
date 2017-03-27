@@ -38,11 +38,12 @@ mangle n = "_idris_" ++ concatMap mangleChar (showCG n)
 
 -- We could generate from:
 -- simpleDecls / defunDecls / liftDecls
-codegenPython :: CodeGenerator
-codegenPython ci = writeFile (outputFile ci) (render "-- " source)
+codegenTTstar :: CodeGenerator
+codegenTTstar ci = writeFile (outputFile ci) (render "-- " source)
   where
     source = text "hello world"
 
+    {-
     -- main file
     decls = defunDecls ci
     ctors = M.fromList [(n, tag) | (n, DConstructor n' tag arity) <- decls]
@@ -50,6 +51,7 @@ codegenPython ci = writeFile (outputFile ci) (render "-- " source)
 
     -- all exports
     exports = vcat $ concatMap cgExport (exportDecls ci)
+    -}
 
 {-
 cgExport :: ExportIFace -> [Doc]

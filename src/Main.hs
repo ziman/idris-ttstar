@@ -34,7 +34,7 @@ c_main opts = do elabPrims
                  loadInputs (inputs opts) Nothing
                  mainProg <- elabMain
                  ir <- compile (Via IBCFormat "ttstar") (output opts) (Just mainProg)
-                 runIO $ codegenPython ir
+                 runIO $ codegenTTstar ir
 
 main :: IO ()
 main = do opts <- getOpts
