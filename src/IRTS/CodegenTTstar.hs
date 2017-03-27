@@ -34,10 +34,11 @@ blankLine = text ""
 -- The prefix "_" makes all names "hidden".
 -- This is useful when you import the generated module from Python code.
 mangle :: Name -> String
-mangle n = "_idris_" ++ concatMap mangleChar (showCG n)
+mangle n = concatMap mangleChar (showCG n)
   where
+    goodChars = "_"
     mangleChar x
-        | isAlpha x || isDigit x = [x]
+        | isAlpha x || isDigit x || (x `elem` goodChars) = [x]
         | otherwise = "_" ++ show (ord x) ++ "_"
 
 -- Let's not mangle /that/ much. Especially function parameters
@@ -65,15 +66,16 @@ cgDef n (TyDecl ntype ty) =
     text "postulate" <+> cgName n <+> colon <+> cgTm ty <> dot
 cgDef n (Operator ty arity defn) =
     text "-- operator" <+> cgName n <+> colon <+> cgTm ty
-cgDef n (CaseOp cinfo ty args defn defn_simp cdefs) =
+cgDef n cop@(CaseOp cinfo ty args defn defn_simp cdefs) =
     cgName n <+> colon <+> cgTm ty <> dot
-    $$ indent (vcat [
-        cgClause n c | c <- defn
-      ])
+    -- $$ cgCase n (cases_compiletime cdefs)
 
-cgClause :: Name -> Either Term (Term, Term) -> Doc
-cgClause fn (Left tm) = cgName fn <+> text "left:" <+> cgTm tm <> dot
-cgClause fn (Right (lhs, rhs)) = cgTm lhs <+> text "=" <+> cgTm rhs <> dot
+{-
+cgCase :: Name -> ([Name], SC) -> Doc
+cgCase fn (pvs, sc) = cgSC pvs lhs sc
+  where
+    lhs = mkApp fn [P n | n <- pvs]
+-}
 
 cgTm :: Term -> Doc
 cgTm = cgTm' []
