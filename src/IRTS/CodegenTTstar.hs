@@ -7,6 +7,7 @@ import IRTS.Simplified
 import IRTS.Defunctionalise hiding (lift)
 
 import Idris.Core.TT
+import Idris.Core.Evaluate
 
 import Numeric
 import Data.Maybe
@@ -27,6 +28,9 @@ import Util.PrettyPrint
 indent :: Doc -> Doc
 indent = nest 2
 
+blankLine :: Doc
+blankLine = text ""
+
 -- The prefix "_" makes all names "hidden".
 -- This is useful when you import the generated module from Python code.
 mangle :: Name -> String
@@ -36,12 +40,26 @@ mangle n = "_idris_" ++ concatMap mangleChar (showCG n)
         | isAlpha x || isDigit x = [x]
         | otherwise = "_" ++ show (ord x) ++ "_"
 
+-- Let's not mangle /that/ much. Especially function parameters
+-- like e0 and e1 are nicer when readable.
+cgName :: Name -> Doc
+cgName (MN i n) | all (\x -> isAlpha x || x `elem` "_") (T.unpack n)
+    = text $ T.unpack n ++ show i
+cgName n = text (mangle n)  -- <?> show n  -- uncomment this to get a comment for *every* mangled name
+
 -- We could generate from:
 -- simpleDecls / defunDecls / liftDecls
 codegenTTstar :: CodeGenerator
 codegenTTstar ci = writeFile (outputFile ci) (render "-- " source)
   where
-    source = text "hello world"
+    source = vcat [cgDecl d $$ blankLine | d <- ttDecls ci]
+
+cgDecl :: (Name, TTDecl) -> Doc
+cgDecl (name, (def, rigCount, injectivity, accessibility, totality, metaInfo))
+    = cgDef name def
+
+cgDef :: Name -> Def -> Doc
+cgDef n def = cgName n
 
     {-
     -- main file
@@ -78,13 +96,6 @@ cgExportFun fn en argCnt
     $+$ text ""
   where
     args = ["arg" ++ show i | i <- [1..argCnt]]
-
--- Let's not mangle /that/ much. Especially function parameters
--- like e0 and e1 are nicer when readable.
-cgName :: Name -> Expr
-cgName (MN i n) | all (\x -> isAlpha x || x `elem` "_") (T.unpack n)
-    = text $ T.unpack n ++ show i
-cgName n = text (mangle n)  -- <?> show n  -- uncomment this to get a comment for *every* mangled name
 
 bigParens :: Doc -> Doc
 bigParens d = lparen $+$ indent d $+$ rparen
